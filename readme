@@ -1,0 +1,202 @@
+Shell Documentation 
+
+	Builtin Commands
+
+		1) cd [directory] - changes the current directory to [directory]
+
+			pseudocode:
+
+				int cd(char **args){ //
+  					if ("cd" is not in the builtin array) {
+    					fprintf(stderr, "directory doesn't exist\n");
+ 					 } else {
+    					if (chdir(args[1]) != 0) { //calls system call chdir()
+     					 	perror("cd"); //prints "cd" followed by an error if there is an error
+    					}
+  					}
+ 					return 1;
+				}
+
+		2) clear - clears the shell screen
+
+			pseudocode:
+
+				for each line of shell screen
+					replace with newline characters or use escape sequence 
+				move cursor to top-left of terminal screen
+				
+		3) dir [directory] - list contents of [directory]	
+
+			pseudocode:
+
+				opendir(filename)
+				readdir(directory) until directory entry is NULL
+				closedir(directory)
+
+		4) env - lists all the current environment variables and their values
+
+			pseudocode:
+
+				char ** env_variables;
+				for(env_variables = environ; *env_varables != NULL; env_variables ++){ 
+					printf("%s\n", *env_variables);
+				}
+				//environ is an array of pointers to strings.
+
+		5) echo [comment] - display [comment] to shell screen followed by a new line character
+
+			pseudocode:
+
+				print comment to screen
+
+		6) help - display user manual 
+
+			pseudocode:
+
+				print list of buit in commands and what they do to shell screen
+
+		7) quit - quits and closes the shell
+
+			pseudocode:
+
+				exit(0);
+
+
+
+
+
+
+	I/O Redirection
+
+		Case 1: somefile < inputfile
+
+			changes the input of somefile from stdin to inputfile and overwrites
+
+		Case 2: somefile << inputfile
+
+			changes the input of somefile from stdin to inputfile but instead of overwriting, it appends
+
+		Case 3: fileA > fileB
+
+			redirects fileA's output from stdout to fileB and overwrites
+
+		Case 4: fileA >> fileB
+
+			redirects fileA's output from stdout to fileB but instead of overwriting, it appends
+
+		pseudocode:
+
+			int main(int argc, char ** arg[]{
+
+				if redirecting input 
+					int newstdin = open(inputfile, O_RDONLY);
+					close(0);
+					dup(newstdin);
+					close(newstdin);
+
+				if redirecting output
+					int newstdout = open(outputfile, O_WRONLY|O_CREAT|S_IRWXU|S_IRWXG|S_IRWXO);
+					close(1);
+					dup(newstdout);
+					close(newstdout);
+
+			}
+
+
+
+	Pipes
+
+		What are pipes?
+
+			Pipes allow two processes to directly share information by trasmitting the output of one process as the input of the other process. It can be
+			used just like I/O redirection or it can be used to connect two programs. The following pseudocode involves piping two programs.
+
+			Example: fileA | fileB
+
+				This transmits the output of fileA to fileB
+
+			pseudocode:
+
+				int pipe1[2];
+				int pipe2[2];
+
+				pipe(pipe1);
+
+				int ret = fork(); //when you fork(), the child inherits the parent's file descriptors
+				if(ret == 0){
+					//child process
+
+					dup2(pipe1[1], STDOUT_FILENO);
+					close(pipe1[1]);
+					close(pipe1[0]);
+					dup2(pipe2[0], STDIN_FILENO);
+
+				}else{
+					//parent process
+
+					dup2(pipe1[0],STDIN_FILENO);
+					close(pipe1[0]);
+					close(pipe1[1]);
+					dup2(pipe2[1], STDOUT_FILENO);
+
+				}
+
+
+
+
+
+	Background Process
+
+		Writing the "&" symbol at the end of the command line returns the command line prompt immediately after executing the command. 
+		Usually, the parent calls wait() which waits for the child process to finish before making the command line prompt available 
+		for further input. When you write &, the wait() function doesn't get called by the parent.
+
+		pseudocode:
+
+			prompt();
+
+			int ret = fork();
+			if(ret == 0){
+				exec();
+
+			}else if(ret > 0){
+
+				//do nothing 
+			}
+
+
+
+
+
+	Shell Main Loop
+
+		pseudocode
+
+			int shell_main(){
+				char *line;
+
+				while (1){
+					print_prompt();
+					line = read_a_line(); //read_a_line will read/parse the command line
+					if(EOF){
+						exit(0);
+					}
+					eval(line);
+
+				}
+			}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
